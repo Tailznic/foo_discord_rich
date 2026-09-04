@@ -89,15 +89,17 @@ typedef struct DiscordRichPresence {
         ]
     )
 
-    # Modern clang-format (18+) fails on duplicated YAML mapping keys, and discord-rpc's
-    # build runs `clang-format` through a custom CMake target. Remove the duplicate key.
+    # Modern clang-format (18+) and CMake's YAML parser fail on duplicated
+    # YAML mapping keys. discord-rpc's .clang-format has IndentCaseLabels: false
+    # twice: once before IncludeCategories and once after IncludeIsMainRegex.
+    # Remove the second occurrence (the one CMake actually chokes on).
     patch_file(
         discord_dir/".clang-format",
         [
             (
                 "DRP_PATCH_DUPLICATE_INDENTCASELABELS_REMOVED",
-                "DisableFormat: false\nFixNamespaceComments: true\nForEachMacros: []\nIndentCaseLabels: false\nIncludeCategories:",
-                "DisableFormat: false\nFixNamespaceComments: true\nForEachMacros: []\n# DRP_PATCH_DUPLICATE_INDENTCASELABELS_REMOVED\nIncludeCategories:",
+                "IncludeIsMainRegex: '(_test|_win|_linux|_mac|_ios|_osx|_null)?$'\nIndentCaseLabels: false\nIndentWidth: 4",
+                "IncludeIsMainRegex: '(_test|_win|_linux|_mac|_ios|_osx|_null)?$'\n# DRP_PATCH_DUPLICATE_INDENTCASELABELS_REMOVED\nIndentWidth: 4",
             ),
         ]
     )
