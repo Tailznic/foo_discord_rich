@@ -252,8 +252,8 @@ bool readFromPipe(HANDLE g_hChildStd_OUT_Rd, pfc::string8 &artwork_url)
     const int TEMP_BUF_SIZE = 16;
     CHAR tempBuf[TEMP_BUF_SIZE];
     DWORD peekedBytes;
-    auto now = std::chrono::high_resolution_clock::now();
-    const auto timeout_s = std::chrono::seconds(10);
+    ULONGLONG startTick = GetTickCount64();
+    const ULONGLONG timeoutMs = 10000; // 10 seconds
 
     // Try to read output from the process. for 10 seconds
     while (!inputFound)
@@ -268,8 +268,7 @@ bool readFromPipe(HANDLE g_hChildStd_OUT_Rd, pfc::string8 &artwork_url)
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        auto td = std::chrono::high_resolution_clock::now() - now;
-        if (td > timeout_s) break;
+        if ((GetTickCount64() - startTick) > timeoutMs) break;
     }
 
     bool rSuccess = false;
