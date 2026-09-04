@@ -102,15 +102,17 @@ typedef struct DiscordRichPresence {
         ]
     )
 
-    # Exclude the clangformat custom target from ALL_BUILD: it is unneeded for our build
-    # and only causes failures with newer clang-format versions.
+    # The clangformat custom target uses an ancient .clang-format config and runs
+    # `clang-format` as part of the build. Modern CMake/MSBuild fails on it
+    # (EXCLUDE_FROM_ALL is not supported properly in MSBuild generators),
+    # so the entire target block is removed (we do not need it for our build).
     patch_file(
         discord_dir/"CMakeLists.txt",
         [
             (
-                "DRP_PATCH_CLANGFORMAT_EXCLUDE_FROM_ALL",
-                "if (CLANG_FORMAT_CMD)\n    add_custom_target(\n        clangformat\n        COMMAND ${CLANG_FORMAT_CMD}",
-                "if (CLANG_FORMAT_CMD)\n    add_custom_target(\n        clangformat\n        EXCLUDE_FROM_ALL\n        COMMAND ${CLANG_FORMAT_CMD}",
+                "DRP_PATCH_CLANGFORMAT_REMOVED",
+                "if (CLANG_FORMAT_CMD)\n    add_custom_target(\n        clangformat\n        COMMAND ${CLANG_FORMAT_CMD}\n        -i -style=file -fallback-style=none\n        ${ALL_SOURCE_FILES}\n        DEPENDS\n        ${ALL_SOURCE_FILES}\n    )\nendif(CLANG_FORMAT_CMD)",
+                "# DRP_PATCH_CLANGFORMAT_REMOVED: clang-format target disabled (not needed for build)\nif (0)\nendif()",
             ),
         ]
     )
