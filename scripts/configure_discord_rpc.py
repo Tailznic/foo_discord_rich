@@ -6,21 +6,6 @@ from pathlib import Path
 
 import call_wrapper
 
-def is_rapidjson_present(discord_dir: Path):
-    rapidjson_dir = discord_dir/"thirdparty"/"rapidjson"
-    return ( rapidjson_dir.exists() and any( rapidjson_dir.iterdir() ) )
-
-def init_rapidjson_submodule(discord_dir: Path):
-    if ( is_rapidjson_present(discord_dir) ):
-        return
-
-    print( "Initializing bundled rapidjson submodule of discord-rpc..." )
-    subprocess.check_call(
-        "git submodule update --init --depth=1 -- thirdparty/rapidjson",
-        cwd=discord_dir,
-        shell=True
-    )
-
 def reset_submodule( submodule_dir: Path ):
     '''Best effort reset, so that the patching below stays idempotent across setup reruns'''
     if ( not ( submodule_dir/".git" ).exists() ):
@@ -111,7 +96,6 @@ def configure():
     assert(discord_dir.exists() and discord_dir.is_dir())
 
     reset_submodule( discord_dir )
-    init_rapidjson_submodule( discord_dir )
 
     shutil.copy2(cur_dir/"additional_files"/"discord-rpc.vcxproj", str(discord_dir/"src") + '/')
 
