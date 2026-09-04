@@ -4,6 +4,7 @@
 
 #include <fb2k/config.h>
 
+#include <chrono>
 #include <ctime>
 #include <fb2k/artwork_metadb.h>
 
