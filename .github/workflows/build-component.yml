@@ -64,8 +64,9 @@ jobs:
 
     strategy:
       matrix:
-        build_configuration: ${{ fromJSON(format('[{0}]', inputs.build_configuration)) }}
-        platform: ${{ fromJSON(format('[{0}]', inputs.platform)) }}
+        # `inputs` are only populated for workflow_dispatch; fall back to defaults for push/PR events
+        build_configuration: ${{ inputs.build_configuration && fromJSON(format('[{0}]', inputs.build_configuration)) || fromJSON('["Release", "Debug"]') }}
+        platform: ${{ inputs.platform && fromJSON(format('[{0}]', inputs.platform)) || fromJSON('["Win32", "x64"]') }}
 
     steps:
     - uses: actions/checkout@v4
