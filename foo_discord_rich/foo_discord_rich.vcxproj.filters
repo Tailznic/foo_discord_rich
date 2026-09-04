@@ -33,6 +33,9 @@
     <ClCompile Include="discord\discord_impl.cpp">
       <Filter>discord</Filter>
     </ClCompile>
+    <ClCompile Include="discord\external_assets.cpp">
+      <Filter>discord</Filter>
+    </ClCompile>
     <ClCompile Include="fb2k\config.cpp">
       <Filter>fb2k</Filter>
     </ClCompile>
@@ -74,6 +77,9 @@
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="discord\discord_impl.h">
+      <Filter>discord</Filter>
+    </ClInclude>
+    <ClInclude Include="discord\external_assets.h">
       <Filter>discord</Filter>
     </ClInclude>
     <ClInclude Include="fb2k\config.h">

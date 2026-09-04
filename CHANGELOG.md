@@ -8,7 +8,17 @@
 
 ___
 
-## [Unreleased][]
+## [Unreleased]
+### Added
+- Presence type option (`Playing` / `Listening` / `Watching` / `Competing`) on the `Main` preferences tab. `Listening` is used by default, so that Discord shows "Listening to ..." with a music note instead of "Playing ...".
+- Uploaded artwork urls are now automatically converted into Discord media-proxy asset keys (`mp:external/...`), so that the artwork is actually displayed instead of the `?` placeholder.
+- x64 build support: the component is now shipped as a multiarch (Win32 + x64) package.
+
+### Changed
+- Default text fields: the first line is now the track title, the second line is the artist.
+
+### Fixed
+- Fixed presence data being modified from worker threads while the artwork upload was in progress.
 
 ## [1.2.0][] - 2019-09-11
 ### Added

@@ -11,9 +11,11 @@ qwr::fb2k::ConfigBool isEnabled( guid::conf_is_enabled, true );
 qwr::fb2k::ConfigUint8Enum<ImageSetting> largeImageSettings( guid::conf_large_image_settings, ImageSetting::Light );
 qwr::fb2k::ConfigUint8Enum<ImageSetting> smallImageSettings( guid::conf_small_image_settings, ImageSetting::Light );
 qwr::fb2k::ConfigUint8Enum<TimeSetting> timeSettings( guid::conf_time_settings, TimeSetting::Elapsed );
+qwr::fb2k::ConfigUint8Enum<PresenceType> presenceType( guid::conf_presence_type, PresenceType::Listening );
 
-qwr::fb2k::ConfigString stateQuery( guid::conf_state_query, "[%title%]" );
-qwr::fb2k::ConfigString detailsQuery( guid::conf_details_query, "[%album artist%[: %album%]]" );
+// Default presence layout: bold first line with the track title, gray second line with the artist
+qwr::fb2k::ConfigString stateQuery( guid::conf_state_query, "[%artist%]" );
+qwr::fb2k::ConfigString detailsQuery( guid::conf_details_query, "[%title%]" );
 
 qwr::fb2k::ConfigString discordAppToken( guid::conf_app_token, "507982587416018945" );
 qwr::fb2k::ConfigString largeImageId_Light( guid::conf_large_image_id_light, "foobar2000" );
@@ -28,5 +30,22 @@ qwr::fb2k::ConfigString artworkMetadbKey( guid::conf_artwork_metadb_key, "%album
 qwr::fb2k::ConfigBool disableWhenPaused( guid::conf_disable_when_paused, false );
 qwr::fb2k::ConfigBool swapSmallImages( guid::conf_swap_small_images, false );
 qwr::fb2k::ConfigBool uploadArtwork( guid::conf_upload_artwork, false );
+
+int GetDiscordActivityType()
+{
+    const auto curType = static_cast<PresenceType>( presenceType.GetValue() );
+    switch ( curType )
+    {
+    case PresenceType::Playing:
+        return DiscordActivityType_Playing;
+    case PresenceType::Watching:
+        return DiscordActivityType_Watching;
+    case PresenceType::Competing:
+        return DiscordActivityType_Competing;
+    case PresenceType::Listening:
+    default:
+        return DiscordActivityType_Listening;
+    }
+}
 
 } // namespace drp::config

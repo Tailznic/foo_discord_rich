@@ -73,8 +73,9 @@ public:
     void Initialize();
     void Finalize();
     void OnSettingsChanged();
-    /* Update presence if the given presence data pointer is the same as the current one */
-    void MaybeUpdatePresence(std::shared_ptr<internal::PresenceData> pd);
+    /* Reapplies the presence image and resends the presence
+       if the given presence data pointer is still the current one */
+    void RefreshImageForPresence( std::shared_ptr<internal::PresenceData> pd );
 
     drp::PresenceModifier GetPresenceModifier();
 

@@ -17,13 +17,24 @@ enum class TimeSetting : uint8_t
     Remaining,
     Disabled
 };
+enum class PresenceType : uint8_t
+{
+    Playing = 0,
+    Listening,
+    Watching,
+    Competing
+};
 
 extern qwr::fb2k::ConfigBool isEnabled;
 extern qwr::fb2k::ConfigUint8Enum<ImageSetting> largeImageSettings;
 extern qwr::fb2k::ConfigUint8Enum<ImageSetting> smallImageSettings;
 extern qwr::fb2k::ConfigUint8Enum<TimeSetting> timeSettings;
+extern qwr::fb2k::ConfigUint8Enum<PresenceType> presenceType;
 extern qwr::fb2k::ConfigString stateQuery;
 extern qwr::fb2k::ConfigString detailsQuery;
+
+/// @brief Maps the configured PresenceType to the Discord ActivityType constant
+int GetDiscordActivityType();
 
 extern qwr::fb2k::ConfigString discordAppToken;
 extern qwr::fb2k::ConfigString largeImageId_Light;

@@ -9,6 +9,14 @@
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -20,7 +28,7 @@
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -32,18 +40,28 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <OutDir>$(ProjectDir)..\_result\</OutDir>
-    <NMakeOutput>$(ProjectDir)..\_result\lib\discord-rpc.lib</NMakeOutput>
+    <OutDir>$(ProjectDir)..\_result\$(Platform)\</OutDir>
+    <NMakeOutput>$(ProjectDir)..\_result\$(Platform)\lib\discord-rpc.lib</NMakeOutput>
   </PropertyGroup>
-  <PropertyGroup>
-    <NMakeBuildCommandLine>cd "$(ProjectDir)"..\
-mkdir build
-cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=..\_result -DCMAKE_GENERATOR_INSTANCE="$(CurrentVsInstallRoot)" -DCMAKE_GENERATOR_PLATFORM=Win32 -DUSE_STATIC_CRT=ON
-cmake --build ..\build --config $(Configuration) --target install</NMakeBuildCommandLine>
+  <PropertyGroup Condition="'$(Platform)'=='Win32'">
     <ExecutablePath>$(DevEnvDir)CommonExtensions\Microsoft\CMake\CMake\bin;$(ExecutablePath)</ExecutablePath>
-    <NMakeCleanCommandLine>rmdir /s/q "$(ProjectDir)"..\build
-rmdir /s/q "$(ProjectDir)"..\_result</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd "$(ProjectDir)"..\
+mkdir build_$(Platform)
+cd build_$(Platform)
+cmake .. -DCMAKE_BUILD_TYPE=$(Configuration) -DCMAKE_INSTALL_PREFIX=..\_result\$(Platform) -DUSE_STATIC_CRT=ON -DCMAKE_C_FLAGS="/Gd" -DCMAKE_CXX_FLAGS="/Gd"
+cmake --build ..\build_$(Platform) --config $(Configuration) --target install</NMakeBuildCommandLine>
+    <NMakeCleanCommandLine>rmdir /s/q "$(ProjectDir)"..\build_$(Platform)
+rmdir /s/q "$(ProjectDir)"..\_result\$(Platform)</NMakeCleanCommandLine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Platform)'=='x64'">
+    <ExecutablePath>$(DevEnvDir)CommonExtensions\Microsoft\CMake\CMake\bin;$(ExecutablePath)</ExecutablePath>
+    <NMakeBuildCommandLine>cd "$(ProjectDir)"..\
+mkdir build_$(Platform)
+cd build_$(Platform)
+cmake .. -DCMAKE_BUILD_TYPE=$(Configuration) -DCMAKE_INSTALL_PREFIX=..\_result\$(Platform) -DUSE_STATIC_CRT=ON
+cmake --build ..\build_$(Platform) --config $(Configuration) --target install</NMakeBuildCommandLine>
+    <NMakeCleanCommandLine>rmdir /s/q "$(ProjectDir)"..\build_$(Platform)
+rmdir /s/q "$(ProjectDir)"..\_result\$(Platform)</NMakeCleanCommandLine>
   </PropertyGroup>
   <ItemDefinitionGroup>
   </ItemDefinitionGroup>

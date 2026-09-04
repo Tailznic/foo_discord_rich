@@ -6,6 +6,7 @@
 
 #include <ctime>
 
+#include "external_assets.h"
 #include "uploader.h"
 #include <fb2k/artwork_metadb.h>
 
@@ -125,52 +126,119 @@ struct sharedData_t
     DiscordHandler* handler;
 };
     
-void PresenceModifier::UpdateImage()
+std::u8string GetFallbackImageKey()
 {
-    auto pc = playback_control::get();
-    
-    if (config::largeImageSettings == config::ImageSetting::Disabled)
-    {
-        setImageKey( std::u8string{}, presenceData_ );
-        return;
-    }
-    
-    metadb_handle_ptr p_out;
-    bool gSuccess = false;
-    metadb_index_hash hash;
-
-    // Check if we want to use artwork and it already exists
-    if (config::uploadArtwork)
-    {
-        gSuccess = pc->get_now_playing(p_out);
-        if (gSuccess)
-        {
-            clientByGUID( guid::artwork_url_index )->hashHandle( p_out, hash );
-            auto rec = record_get( hash );
-
-            if ( rec.artwork_url.get_length() > 0 )
-            {
-                setImageKey( std::u8string( rec.artwork_url ), presenceData_ );
-                return;
-            }
-        }
-    }
-
     switch ( config::largeImageSettings )
     {
     case config::ImageSetting::Light:
     {
-        setImageKey( config::largeImageId_Light, presenceData_ );
-        break;
+        return config::largeImageId_Light;
     }
     case config::ImageSetting::Dark:
     {
-        setImageKey( config::largeImageId_Dark, presenceData_ );
-        break;
+        return config::largeImageId_Dark;
     }
+    case config::ImageSetting::Disabled:
+    default:
+    {
+        return std::u8string{};
+    }
+    }
+}
+
+/**
+ * Sets the artwork image for the presence: Discord media-proxy keys are applied directly,
+ * while uploaded artwork urls are first resolved into such a key (async, in a worker thread).
+ */
+static void ApplyArtworkUrl( const std::u8string& artworkUrl,
+                             const std::u8string& fallbackKey,
+                             std::shared_ptr<internal::PresenceData> pd,
+                             DiscordHandler* handler )
+{
+    if ( artworkUrl.rfind( u8"mp:", 0 ) == 0 )
+    { // Already a Discord media-proxy asset key
+        setImageKey( artworkUrl, pd );
+        return;
     }
 
-    if (config::uploadArtwork && gSuccess)
+    if ( !external_assets::IsResolvableArtworkUrl( artworkUrl ) )
+    {
+        setImageKey( fallbackKey, pd );
+        return;
+    }
+
+    std::u8string cachedKey;
+    if ( external_assets::TryGetCachedArtworkKey( artworkUrl, cachedKey ) )
+    {
+        setImageKey( cachedKey.empty() ? fallbackKey : cachedKey, pd );
+        return;
+    }
+
+    // Use the fallback image while the artwork url is being resolved
+    setImageKey( fallbackKey, pd );
+
+    auto shared = std::make_shared<sharedData_t>();
+    shared->pm = pd;
+    shared->handler = handler;
+
+    const std::u8string applicationId = config::discordAppToken;
+
+    fb2k::splitTask( [artworkUrl, applicationId, shared] {
+        // In worker thread!
+        try {
+            const auto assetKey = external_assets::ResolveArtworkAssetKey( artworkUrl, applicationId );
+            if ( assetKey.empty() )
+            {
+                FB2K_console_formatter() << DRP_NAME_WITH_VERSION << ": Failed to resolve Discord asset key for artwork url: " << pfc::string8( artworkUrl.c_str() );
+            }
+
+            // Back to the main thread: reapply the image (now from the cache)
+            fb2k::inMainThread( [shared] {
+                shared->handler->RefreshImageForPresence( shared->pm );
+            } );
+        } catch(std::exception const & e) {
+            external_assets::StoreArtworkKey( artworkUrl, std::u8string{} );
+            FB2K_console_formatter() << DRP_NAME_WITH_VERSION << "Critical error: " << e;
+        }
+    } );
+}
+
+void PresenceModifier::UpdateImage()
+{
+    auto pc = playback_control::get();
+
+    if ( config::largeImageSettings == config::ImageSetting::Disabled )
+    {
+        setImageKey( std::u8string{}, presenceData_ );
+        return;
+    }
+
+    metadb_handle_ptr p_out;
+    metadb_index_hash hash;
+    std::u8string artworkUrl;
+
+    // Check if we already have an uploaded artwork url for the current track
+    if ( config::uploadArtwork && pc->get_now_playing( p_out ) )
+    {
+        clientByGUID( guid::artwork_url_index )->hashHandle( p_out, hash );
+        const auto rec = record_get( hash );
+        if ( rec.artwork_url.get_length() > 0 )
+        {
+            artworkUrl = std::u8string( rec.artwork_url );
+        }
+    }
+
+    const auto fallbackKey = GetFallbackImageKey();
+
+    if ( !artworkUrl.empty() )
+    {
+        ApplyArtworkUrl( artworkUrl, fallbackKey, presenceData_, &parent_ );
+        return;
+    }
+
+    setImageKey( fallbackKey, presenceData_ );
+
+    if ( config::uploadArtwork && p_out.is_valid() )
     {
         auto shared = std::make_shared<sharedData_t>();
         shared->pm = presenceData_;
@@ -182,9 +250,10 @@ void PresenceModifier::UpdateImage()
                 pfc::string8 artwork_url;
                 if( uploader::extractAndUploadArtwork(p_out, fb2k::noAbort, artwork_url, hash) )
                 {
-                    const auto imageKey = std::u8string( artwork_url );
-                        setImageKey(imageKey, shared->pm);
-                        shared->handler->MaybeUpdatePresence(shared->pm);
+                    // Back to the main thread: reload the image with the freshly uploaded artwork
+                    fb2k::inMainThread( [shared] {
+                        shared->handler->RefreshImageForPresence( shared->pm );
+                    } );
                 }
             } catch(std::exception const & e) {
                 // should not really get here
@@ -385,29 +454,41 @@ void DiscordHandler::OnSettingsChanged()
         Initialize();
     }
 
-    auto pm = GetPresenceModifier();
-    pm.UpdateImage();
-    pm.UpdateSmallImage();
-    pm.UpdateTrack();
-    if ( !config::isEnabled )
+    // Allow artwork key resolution to retry with the new settings
+    external_assets::ClearArtworkKeyCache();
+
     {
-        pm.Disable();
+        auto pm = GetPresenceModifier();
+        pm.UpdateImage();
+        pm.UpdateSmallImage();
+        pm.UpdateTrack();
+        if ( !config::isEnabled )
+        {
+            pm.Disable();
+        }
+    }
+
+    if ( config::isEnabled )
+    {
+        auto pc = playback_control::get();
+        if ( pc->is_playing() && !( pc->is_paused() && config::disableWhenPaused ) )
+        { // Force presence refresh, so that setting changes (e.g. the activity type) are applied immediately
+            SendPresence();
+        }
     }
 }
 
-void DiscordHandler::MaybeUpdatePresence(std::shared_ptr<internal::PresenceData> pd)
+void DiscordHandler::RefreshImageForPresence( std::shared_ptr<internal::PresenceData> pd )
 {
-    // If it's the same pointer it means the presence has not changed while uploading the cover
-    // and we can continue to updating the presence with the cover url
-    if (pd != presenceData_)
+    // If it's not the same pointer, the presence has changed while the artwork
+    // was being uploaded/resolved, so the stale presence data is discarded
+    if ( pd != presenceData_ )
     {
         return;
     }
 
-    if ( HasPresence() )
-    {
-        SendPresence();
-    }
+    auto pm = GetPresenceModifier();
+    pm.UpdateImage();
 }
 
 bool DiscordHandler::HasPresence() const
@@ -419,6 +500,7 @@ void DiscordHandler::SendPresence()
 {
     if ( config::isEnabled )
     {
+        presenceData_->presence.activityType = config::GetDiscordActivityType();
         Discord_UpdatePresence( &presenceData_->presence );
         hasPresence_ = true;
     }

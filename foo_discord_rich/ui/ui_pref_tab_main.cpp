@@ -28,6 +28,11 @@ PreferenceTabMain::PreferenceTabMain( PreferenceTabManager* pParent )
                      { { TimeSetting::Elapsed, IDC_RADIO_TIME_ELAPSED },
                        { TimeSetting::Remaining, IDC_RADIO_TIME_REMAINING },
                        { TimeSetting::Disabled, IDC_RADIO_TIME_DISABLED } } )
+    , presenceType_( config::presenceType,
+                     { { PresenceType::Playing, IDC_RADIO_TYPE_PLAYING },
+                       { PresenceType::Listening, IDC_RADIO_TYPE_LISTENING },
+                       { PresenceType::Watching, IDC_RADIO_TYPE_WATCHING },
+                       { PresenceType::Competing, IDC_RADIO_TYPE_COMPETING } } )
     , disableWhenPaused_( config::disableWhenPaused )
     , swapSmallImages_( config::swapSmallImages )
     , ddxOptions_( {
@@ -37,6 +42,7 @@ PreferenceTabMain::PreferenceTabMain( PreferenceTabManager* pParent )
           qwr::ui::CreateUiDdxOption<qwr::ui::UiDdx_RadioRange>( largeImageSettings_, std::initializer_list<int>{ IDC_RADIO_IMG_LIGHT, IDC_RADIO_IMG_DARK, IDC_RADIO_IMG_DISABLED } ),
           qwr::ui::CreateUiDdxOption<qwr::ui::UiDdx_RadioRange>( smallImageSettings_, std::initializer_list<int>{ IDC_RADIO_PLAYBACK_IMG_LIGHT, IDC_RADIO_PLAYBACK_IMG_DARK, IDC_RADIO_PLAYBACK_IMG_DISABLED } ),
           qwr::ui::CreateUiDdxOption<qwr::ui::UiDdx_RadioRange>( timeSettings_, std::initializer_list<int>{ IDC_RADIO_TIME_ELAPSED, IDC_RADIO_TIME_REMAINING, IDC_RADIO_TIME_DISABLED } ),
+          qwr::ui::CreateUiDdxOption<qwr::ui::UiDdx_RadioRange>( presenceType_, std::initializer_list<int>{ IDC_RADIO_TYPE_PLAYING, IDC_RADIO_TYPE_LISTENING, IDC_RADIO_TYPE_WATCHING, IDC_RADIO_TYPE_COMPETING } ),
           qwr::ui::CreateUiDdxOption<qwr::ui::UiDdx_CheckBox>( disableWhenPaused_, IDC_CHECK_DISABLE_WHEN_PAUSED ),
           qwr::ui::CreateUiDdxOption<qwr::ui::UiDdx_CheckBox>( swapSmallImages_, IDC_CHECK_SWAP_STATUS ),
       } )

@@ -34,6 +34,7 @@ public:
         COMMAND_RANGE_CODE_HANDLER_EX( IDC_RADIO_IMG_LIGHT, IDC_RADIO_IMG_DISABLED, BN_CLICKED, OnEditChange )
         COMMAND_RANGE_CODE_HANDLER_EX( IDC_RADIO_PLAYBACK_IMG_LIGHT, IDC_RADIO_PLAYBACK_IMG_DISABLED, BN_CLICKED, OnEditChange )
         COMMAND_RANGE_CODE_HANDLER_EX( IDC_RADIO_TIME_ELAPSED, IDC_RADIO_TIME_DISABLED, BN_CLICKED, OnEditChange )
+        COMMAND_RANGE_CODE_HANDLER_EX( IDC_RADIO_TYPE_PLAYING, IDC_RADIO_TYPE_COMPETING, BN_CLICKED, OnEditChange )
         COMMAND_HANDLER_EX( IDC_CHECK_DISABLE_WHEN_PAUSED, BN_CLICKED, OnEditChange )
         COMMAND_HANDLER_EX( IDC_CHECK_SWAP_STATUS, BN_CLICKED, OnEditChange )
         COMMAND_HANDLER_EX( IDC_LINK_FORMAT_HELP, BN_CLICKED, OnHelpUrlClick )
@@ -73,13 +74,14 @@ private:
                             largeImageSettings,
                             smallImageSettings,
                             timeSettings,
+                            presenceType,
                             disableWhenPaused,
                             swapSmallImages )
 
 #undef SPTF_DEFINE_OPTIONS
 #undef SPTF_DEFINE_OPTION
 
-    std::array<std::unique_ptr<qwr::ui::IUiDdxOption>, 8> ddxOptions_;
+    std::array<std::unique_ptr<qwr::ui::IUiDdxOption>, 9> ddxOptions_;
 
     CHyperLink helpUrl_;
 };

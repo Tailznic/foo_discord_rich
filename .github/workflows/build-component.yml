@@ -83,15 +83,9 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v2
 
-    - uses: ChristopheLav/windows-sdk-install@v1
-      with:
-        version-sdk: 18362
-        features: OptionId.DesktopCPPx86,OptionId.DesktopCPPx64
-
     - uses: ilammy/msvc-dev-cmd@v1
       continue-on-error: true
       with:
-        sdk: 10.0.18362.0
         arch: ${{matrix.platform}}
 
     - name: Restore NuGet packages
@@ -150,11 +144,18 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.build_configuration == 'Release' && 'foo_discord_rich.fb2k-component' || 'foo_discord_rich.fb2k-component_debug' }}
-          path: _result/Win32_${{matrix.build_configuration}}/foo_discord_rich.fb2k-component
+          path: |
+            _result/multiarch_release/*.fb2k-component
+            _result/multiarch_debug/*.fb2k-component
+            _result/Win32_${{matrix.build_configuration}}/*.fb2k-component
+            _result/x64_${{matrix.build_configuration}}/*.fb2k-component
 
       - name: Upload release debug symbols
         if: ${{ matrix.build_configuration == 'Release' }}
         uses: actions/upload-artifact@v4
         with:
           name: foo_discord_rich_pdb.zip
-          path: _result/Win32_${{matrix.build_configuration}}/foo_discord_rich_pdb.zip
+          path: |
+            _result/multiarch_release/*_pdb.zip
+            _result/Win32_${{matrix.build_configuration}}/*_pdb.zip
+            _result/x64_${{matrix.build_configuration}}/*_pdb.zip
