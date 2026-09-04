@@ -12,6 +12,7 @@
 #include <Windows.h>
 
 #include <algorithm>
+#include <chrono>
 
 // ATL/WTL
 /// atlstr.h (includes atlbase.h) must be included first for CString to LPTSTR conversion to work.

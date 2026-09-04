@@ -500,7 +500,7 @@ void DiscordHandler::SendPresence()
 {
     if ( config::isEnabled )
     {
-        presenceData_->presence.activityType = static_cast<DiscordActivityType>(config::GetDiscordActivityType());
+        presenceData_->presence.activityType = (DiscordActivityType)config::GetDiscordActivityType();
         Discord_UpdatePresence( &presenceData_->presence );
         hasPresence_ = true;
     }
