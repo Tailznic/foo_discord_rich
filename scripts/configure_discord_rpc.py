@@ -102,6 +102,19 @@ typedef struct DiscordRichPresence {
         ]
     )
 
+    # Exclude the clangformat custom target from ALL_BUILD: it is unneeded for our build
+    # and only causes failures with newer clang-format versions.
+    patch_file(
+        discord_dir/"CMakeLists.txt",
+        [
+            (
+                "DRP_PATCH_CLANGFORMAT_EXCLUDE_FROM_ALL",
+                "if (CLANG_FORMAT_CMD)\n    add_custom_target(\n        clangformat\n        COMMAND ${CLANG_FORMAT_CMD}",
+                "if (CLANG_FORMAT_CMD)\n    add_custom_target(\n        clangformat\n        EXCLUDE_FROM_ALL\n        COMMAND ${CLANG_FORMAT_CMD}",
+            ),
+        ]
+    )
+
 def configure():
     cur_dir = Path(__file__).parent.absolute()
     root_dir = cur_dir.parent
